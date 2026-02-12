@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video File Matcher (Filename Only)</title>
+    <title>Video Matcher (Filename Only + Counter)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 20px; color: #333; }
         .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -40,6 +40,18 @@
         table.check-table td { padding: 8px; border: 1px solid #ddd; }
         .match-ok { color: #155724; background-color: #d4edda; font-weight: bold; text-align: center; }
         .match-fail { color: #721c24; background-color: #f8d7da; font-weight: bold; text-align: center; }
+
+        /* Badge Counter Style */
+        .count-badge {
+            background-color: #28a745;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin-left: 8px;
+            display: inline-block;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -92,7 +104,8 @@
             </table>
         </div>
 
-        <label>Output Final (HANYA NAMA FILE - Siap Copy):</label>
+        <label>Output Final (HANYA NAMA FILE - Siap Copy) <span id="finalCountBadge" class="count-badge" style="display:none;">0 File</span>:</label>
+        
         <textarea id="finalOutput" readonly style="height: 120px; font-weight: bold; color: #000;"></textarea>
         <button class="success" onclick="copyToClipboard()">Copy Hasil</button>
     </div>
@@ -208,6 +221,11 @@
         // Tampilkan Hasil (Nama File Saja)
         document.getElementById('finalOutput').value = finalOutputList.join('\n');
 
+        // --- UPDATE PENGHITUNG JUMLAH FILE ---
+        const badge = document.getElementById('finalCountBadge');
+        badge.style.display = 'inline-block';
+        badge.innerText = finalOutputList.length + ' File';
+
         // Pindah ke Tab 4
         document.querySelector('.tab-btn:nth-child(4)').click();
         openTab(null, 'tab4');
@@ -225,6 +243,7 @@
             document.getElementById('cleanOutput').value = "";
             document.getElementById('pathInput').value = "";
             document.getElementById('finalOutput').value = "";
+            document.getElementById('finalCountBadge').style.display = "none"; // Reset badge
             document.querySelector("#visualCheckTable tbody").innerHTML = "";
             orderedNames = [];
             document.querySelector('.tab-btn:nth-child(1)').click();
