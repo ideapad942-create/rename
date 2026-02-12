@@ -3,115 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Video Organizer (Manual Mode)</title>
+    <title>Video File Matcher (Filename Only)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 20px; color: #333; }
-        .container { max-width: 950px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         
-        /* Navigation */
-        .tabs { display: flex; border-bottom: 2px solid #e0e0e0; margin-bottom: 20px; }
+        /* Tabs */
+        .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
         .tab-btn { padding: 12px 20px; cursor: pointer; border: none; background: none; font-weight: 600; color: #777; outline: none; transition: 0.3s; }
         .tab-btn:hover { background-color: #f1f1f1; color: #007bff; }
-        .tab-btn.active { border-bottom: 3px solid #007bff; color: #007bff; }
+        .tab-btn.active { border-bottom: 3px solid #28a745; color: #28a745; }
 
         /* Content */
         .tab-content { display: none; animation: fadeIn 0.3s; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Inputs */
+        /* Inputs & Textareas */
         label { display: block; margin-bottom: 8px; font-weight: 700; color: #444; }
-        textarea { width: 100%; height: 150px; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: 'Consolas', monospace; font-size: 13px; line-height: 1.4; }
-        textarea:focus { border-color: #007bff; outline: none; }
+        textarea { width: 100%; height: 150px; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: 'Consolas', monospace; font-size: 13px; }
+        textarea:focus { border-color: #28a745; outline: none; }
 
         /* Buttons */
-        button { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: 600; }
+        button { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: 600; margin-top: 5px; }
         button:hover { background-color: #0056b3; }
-        button.reset { background-color: #dc3545; float: right; }
-        button.reset:hover { background-color: #a71d2a; }
-
-        /* Tables & Lists for Visual Check */
-        .preview-list { max-height: 200px; overflow-y: auto; background: #fafafa; border: 1px solid #eee; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; }
-        .preview-item { padding: 2px 5px; border-bottom: 1px solid #eee; }
         
-        table.check-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 13px; }
+        button.success { background-color: #28a745; font-size: 16px; padding: 12px 25px; width: 100%; }
+        button.success:hover { background-color: #218838; }
+
+        button.reset { background-color: #dc3545; float: right; margin-top: 0; }
+        button.reset:hover { background-color: #c82333; }
+
+        /* Visual Table */
+        table.check-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 13px; font-family: sans-serif; }
         table.check-table th { background: #eee; text-align: left; padding: 8px; border: 1px solid #ddd; }
         table.check-table td { padding: 8px; border: 1px solid #ddd; }
-        .match-ok { color: green; font-weight: bold; background-color: #e6fffa; }
-        .match-fail { color: red; font-weight: bold; background-color: #ffe6e6; }
-        
-        .badge { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-left: 5px; }
+        .match-ok { color: #155724; background-color: #d4edda; font-weight: bold; text-align: center; }
+        .match-fail { color: #721c24; background-color: #f8d7da; font-weight: bold; text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2>Smart Video Organizer <span style="font-size:0.5em; color:#fff; background:#28a745; padding:3px 8px; border-radius:4px; vertical-align:middle;">Manual Mode</span></h2>
-        <button class="reset" onclick="resetAll()">Reset Ulang</button>
+        <h2>Video Matcher <span style="font-size:0.5em; color:#fff; background:#28a745; padding:3px 8px; border-radius:4px; vertical-align:middle;">Nama File Only</span></h2>
+        <button class="reset" onclick="resetAll()">Reset Semua</button>
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="openTab(event, 'tab2')">1. Input Nama</button>
-        <button class="tab-btn" onclick="openTab(event, 'tab3')">2. Cek Urutan</button>
-        <button class="tab-btn" onclick="openTab(event, 'tab4')">3. Input Path File</button>
-        <button class="tab-btn" onclick="openTab(event, 'tab5')">4. Hasil & Cek</button>
+        <button class="tab-btn active" onclick="openTab(event, 'tab1')">1. Input Nama</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab2')">2. Cek Urutan</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab3')">3. Input Path</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab4')">4. Hasil Final</button>
     </div>
 
-    <div id="tab2" class="tab-content active">
-        <label>Masukkan Data Mentah (Dari Videohive/Notepad):</label>
-        <textarea id="rawInput" placeholder="Paste data Anda di sini...&#10;Loop 3d 5 2&#10;Updated 11 minutes ago&#10;Loop 3d 12..."></textarea>
-        <button onclick="processNames()">Proses & Bersihkan</button>
-        <span style="font-size: 0.9em; color:#666; margin-left:10px;">Script akan otomatis menghapus baris 'Updated...'</span>
+    <div id="tab1" class="tab-content active">
+        <label>Masukkan Data Mentah (Nama + Updated...):</label>
+        <textarea id="rawInput" placeholder="Loop 3d 5 2&#10;Updated 6 hours ago&#10;Loop 3d 12..."></textarea>
+        <button onclick="processNames()">Proses Nama</button>
+    </div>
+
+    <div id="tab2" class="tab-content">
+        <label>Hasil Nama Bersih (Cek Urutan di sini):</label>
+        <textarea id="cleanOutput" readonly style="background:#f9f9f9; height: 200px;"></textarea>
+        
+        <button class="success" onclick="confirmOrder()">✅ Urutan Sudah Sesuai -> Masuk ke Input Path</button>
     </div>
 
     <div id="tab3" class="tab-content">
-        <label>Daftar Nama Video (Target Urutan):</label>
-        <textarea id="cleanOutput" readonly placeholder="Hasil bersih akan muncul di sini..."></textarea>
-        <div class="preview-list" id="countDisplayTab3">Jumlah item: 0</div>
+        <label>Paste Path File Lengkap (Path "G:\" akan otomatis dibuang di output):</label>
+        <textarea id="pathInput" placeholder='"G:\jey\envanto\Loop 3d 5_2.mov"&#10;"G:\jey\envanto\Loop 3d 12.mov"'></textarea>
+        <button onclick="matchPaths()">Sesuaikan & Ambil Nama File</button>
     </div>
 
     <div id="tab4" class="tab-content">
-        <label>Masukkan Path File (Penuh dengan folder & kutip):</label>
-        <textarea id="pathInput" oninput="updatePathPreview()" placeholder='"G:\folder\file.mov"&#10;"G:\folder\file2.mov"'></textarea>
-        
-        <label>Preview Nama File (Path Folder Dihapus):</label>
-        <div class="preview-list" id="pathPreviewBox" style="height: 150px; background: #fff; border:1px solid #ccc;">
-            <i style="color:#999">Paste path di atas, nama file bersih akan muncul di sini...</i>
-        </div>
-        
-        <div style="margin-top:10px;">
-            <button onclick="matchPaths()">Sesuaikan Path dengan Urutan Tab 2</button>
-        </div>
-    </div>
-
-    <div id="tab5" class="tab-content">
-        <label>Tabel Pengecekan (Visual Verification):</label>
-        <div style="max-height: 250px; overflow-y: auto; border: 1px solid #ddd; margin-bottom: 15px;">
+        <label>Tabel Pengecekan:</label>
+        <div style="max-height: 200px; overflow-y: auto; margin-bottom: 15px; border:1px solid #ddd;">
             <table class="check-table" id="visualCheckTable">
                 <thead>
                     <tr>
                         <th>No</th>
-                        <th>Nama Target (Dari Tab 2)</th>
+                        <th>Target (Tab 2)</th>
                         <th>Status</th>
-                        <th>File Ditemukan (Dari Tab 3)</th>
+                        <th>File Ditemukan (Tab 3)</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr><td colspan="4" style="text-align:center">Belum ada data diproses.</td></tr>
-                </tbody>
+                <tbody><tr><td colspan="4">Menunggu proses...</td></tr></tbody>
             </table>
         </div>
 
-        <label>Output Final (Full Path Berurutan - Siap Copy):</label>
-        <textarea id="finalOutput" readonly style="height: 100px;"></textarea>
-        <button onclick="copyToClipboard()">Copy Path Final</button>
+        <label>Output Final (HANYA NAMA FILE - Siap Copy):</label>
+        <textarea id="finalOutput" readonly style="height: 120px; font-weight: bold; color: #000;"></textarea>
+        <button class="success" onclick="copyToClipboard()">Copy Hasil</button>
     </div>
 </div>
 
 <script>
     let orderedNames = [];
-    let fileDatabase = []; // Menyimpan objek { cleanName: "...", fullPath: "..." }
+    let fileDatabase = [];
 
     function openTab(evt, tabName) {
         let i, tabcontent, tablinks;
@@ -123,7 +112,7 @@
         if(evt) evt.currentTarget.className += " active";
     }
 
-    // --- TAB 1 & 2: Membersihkan Nama ---
+    // --- 1. PROSES NAMA ---
     function processNames() {
         const raw = document.getElementById('rawInput').value;
         const lines = raw.split('\n');
@@ -131,142 +120,115 @@
 
         lines.forEach(line => {
             let clean = line.trim();
-            // Hapus baris kosong dan baris yang mengandung "Updated" atau tanggal
+            // Hapus baris 'Updated' atau tanggal
             if (clean && !clean.includes("Updated") && !clean.match(/ago$/)) {
                 orderedNames.push(clean);
             }
         });
 
         document.getElementById('cleanOutput').value = orderedNames.join('\n');
-        document.getElementById('countDisplayTab3').innerText = "Jumlah item: " + orderedNames.length;
         
-        // Auto pindah ke tab berikutnya
+        // Pindah ke Tab 2
         document.querySelector('.tab-btn:nth-child(2)').click();
+        openTab(null, 'tab2');
+    }
+
+    // --- 2. KONFIRMASI URUTAN ---
+    function confirmOrder() {
+        if (orderedNames.length === 0) {
+            alert("Data kosong! Silakan proses di Tab 1 dulu.");
+            return;
+        }
+        // Langsung lompat ke Tab 3 (Input Path)
+        document.querySelector('.tab-btn:nth-child(3)').click();
         openTab(null, 'tab3');
     }
 
-    // --- TAB 3: Handle Input Path & Tampilan Bersih ---
-    function updatePathPreview() {
-        const rawInput = document.getElementById('pathInput').value;
-        const lines = rawInput.split(/\r?\n/); // Split per baris
-        const previewBox = document.getElementById('pathPreviewBox');
+    // --- 3. MATCHING & CLEANING PATH ---
+    function matchPaths() {
+        const pathText = document.getElementById('pathInput').value;
+        // Split baris
+        let paths = pathText.split(/\r?\n/).map(p => p.trim()).filter(p => p !== "");
         
-        fileDatabase = []; // Reset database sementara
-        let previewHTML = "";
-
-        lines.forEach(line => {
-            let cleanLine = line.trim();
-            if (cleanLine === "") return;
-
-            // 1. Hapus tanda kutip (")
-            let noQuotes = cleanLine.replace(/['"]+/g, '');
+        // Buat database file sementara
+        fileDatabase = [];
+        paths.forEach(fullPath => {
+            // Bersihkan tanda kutip
+            let cleanPath = fullPath.replace(/['"]+/g, '');
+            // Ambil hanya nama file (buang G:\Folder\...)
+            let fileName = cleanPath.split(/[\\/]/).pop();
             
-            // 2. Ambil nama file saja (hapus folder G:\...)
-            // Menggunakan regex untuk memisahkan berdasarkan \ (Windows) atau / (Mac/Linux)
-            let fileName = noQuotes.split(/[\\/]/).pop();
-
             if (fileName) {
-                // Simpan ke database: Full Path (untuk output nanti) & File Name (untuk matching)
                 fileDatabase.push({
-                    fullPath: noQuotes,
-                    fileName: fileName
+                    original: cleanPath, // Masih disimpan jika butuh debug
+                    nameOnly: fileName   // Ini yang akan kita pakai
                 });
-                previewHTML += `<div class="preview-item">📄 ${fileName}</div>`;
             }
         });
 
-        if (previewHTML === "") {
-            previewBox.innerHTML = '<i style="color:#999">Paste path di atas...</i>';
-        } else {
-            previewBox.innerHTML = previewHTML;
-        }
-    }
-
-    // --- TAB 4: Matching Logic & Visual Table ---
-    function matchPaths() {
-        if (orderedNames.length === 0) {
-            alert("Harap proses nama di Tab 1 dulu.");
-            return;
-        }
-        if (fileDatabase.length === 0) {
-            // Jika user lupa, panggil updatePathPreview sekali lagi
-            updatePathPreview();
-            if (fileDatabase.length === 0) {
-                alert("Harap masukkan path file di Tab 3.");
-                return;
-            }
-        }
+        if (orderedNames.length === 0) { alert("Urutan nama (Tab 2) kosong."); return; }
+        if (fileDatabase.length === 0) { alert("Path file (Tab 3) kosong."); return; }
 
         const tableBody = document.querySelector("#visualCheckTable tbody");
-        tableBody.innerHTML = ""; // Reset tabel
+        tableBody.innerHTML = "";
         
-        let finalPaths = [];
-        let matchCount = 0;
+        let finalOutputList = [];
 
         orderedNames.forEach((targetName, index) => {
             // Normalisasi Target: "Loop 3d 5 2" -> "loop3d52"
             let normalizedTarget = targetName.toLowerCase().replace(/[^a-z0-9]/g, "");
 
-            // Cari file yang cocok di database
+            // Cari di database file
             let match = fileDatabase.find(file => {
                 // Normalisasi File: "Loop 3d 5_2.mov" -> "loop3d52mov"
-                // Kita check apakah file "mengandung" target name
-                let normalizedFile = file.fileName.toLowerCase().replace(/[^a-z0-9]/g, "");
+                let normalizedFile = file.nameOnly.toLowerCase().replace(/[^a-z0-9]/g, "");
                 return normalizedFile.includes(normalizedTarget);
             });
 
             let row = document.createElement("tr");
-            let statusCell = "";
-            let fileCell = "";
+            let statusHTML = "";
+            let fileHTML = "";
 
             if (match) {
-                finalPaths.push(match.fullPath); // Simpan path asli
-                statusCell = `<td class="match-ok">OK</td>`;
-                fileCell = `<td>${match.fileName}</td>`;
-                matchCount++;
+                // KUNCI: Kita ambil match.nameOnly (Nama Filenya saja), BUKAN full path
+                finalOutputList.push(match.nameOnly);
+                
+                statusHTML = `<td class="match-ok">OK</td>`;
+                fileHTML = `<td>${match.nameOnly}</td>`;
             } else {
-                finalPaths.push(`[FILE TIDAK DITEMUKAN: ${targetName}]`);
-                statusCell = `<td class="match-fail">MISSING</td>`;
-                fileCell = `<td style="color:red; font-style:italic;">Tidak ada file yang cocok</td>`;
+                finalOutputList.push(`[MISSING: ${targetName}]`);
+                statusHTML = `<td class="match-fail">X</td>`;
+                fileHTML = `<td style="color:red">Tidak ditemukan</td>`;
             }
 
-            row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${targetName}</td>
-                ${statusCell}
-                ${fileCell}
-            `;
+            row.innerHTML = `<td>${index + 1}</td><td>${targetName}</td>${statusHTML}${fileHTML}`;
             tableBody.appendChild(row);
         });
 
-        // Isi textarea final
-        document.getElementById('finalOutput').value = finalPaths.join('\n');
-        
+        // Tampilkan Hasil (Nama File Saja)
+        document.getElementById('finalOutput').value = finalOutputList.join('\n');
+
         // Pindah ke Tab 4
         document.querySelector('.tab-btn:nth-child(4)').click();
-        openTab(null, 'tab5');
+        openTab(null, 'tab4');
     }
 
     function copyToClipboard() {
         const el = document.getElementById("finalOutput");
         el.select();
-        navigator.clipboard.writeText(el.value).then(() => {
-            alert("Path berhasil dicopy!");
-        });
+        navigator.clipboard.writeText(el.value).then(() => alert("Berhasil dicopy!"));
     }
 
     function resetAll() {
-        if(confirm("Reset semua input?")) {
+        if(confirm("Reset semua data?")) {
             document.getElementById('rawInput').value = "";
             document.getElementById('cleanOutput').value = "";
             document.getElementById('pathInput').value = "";
             document.getElementById('finalOutput').value = "";
-            document.getElementById('pathPreviewBox').innerHTML = "";
             document.querySelector("#visualCheckTable tbody").innerHTML = "";
             orderedNames = [];
-            fileDatabase = [];
             document.querySelector('.tab-btn:nth-child(1)').click();
-            openTab(null, 'tab2');
+            openTab(null, 'tab1');
         }
     }
 </script>
