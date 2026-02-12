@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video List Organizer Tool</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        
+        /* Tab Navigation */
+        .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
+        .tab-btn { padding: 10px 20px; cursor: pointer; border: none; background: none; font-weight: bold; color: #555; outline: none; }
+        .tab-btn:hover { background-color: #f0f0f0; }
+        .tab-btn.active { border-bottom: 3px solid #007bff; color: #007bff; }
+
+        /* Tab Content */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Forms & Inputs */
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="text"], textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        textarea { height: 150px; font-family: monospace; }
+        
+        button { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        button:hover { background-color: #0056b3; }
+        button.secondary { background-color: #6c757d; }
+        button.secondary:hover { background-color: #5a6268; }
+
+        .output-box { background: #e9ecef; padding: 10px; border-radius: 4px; min-height: 100px; white-space: pre-wrap; font-family: monospace; border: 1px solid #ced4da; }
+        .note { font-size: 0.9em; color: #666; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Video Metadata Organizer</h2>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab(event, 'tab1')">Tab 1: API Key</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab2')">Tab 2: Input Nama</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab3')">Tab 3: Hasil Urutan</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab4')">Tab 4: Input Path</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab5')">Tab 5: Output Final</button>
+    </div>
+
+    <div id="tab1" class="tab-content active">
+        <label for="apiKeyInput">Masukkan API Key (Untuk Deteksi):</label>
+        <input type="text" id="apiKeyInput" placeholder="Tempel API Key di sini...">
+        <button onclick="saveApiKey()">Simpan API Key</button>
+        <p class="note" id="apiStatus">Status: Menunggu input...</p>
+    </div>
+
+    <div id="tab2" class="tab-content">
+        <label for="rawInput">Masukkan Data Mentah (Dari Videohive/Dashboard):</label>
+        <textarea id="rawInput" placeholder="Contoh:&#10;Loop 3d 5 2&#10;Updated 6 hours ago&#10;Loop 3d 12&#10;Updated 7 hours ago"></textarea>
+        <button onclick="processNames()">Proses & Hapus 'Updated'</button>
+    </div>
+
+    <div id="tab3" class="tab-content">
+        <label>Daftar Nama Video (Urutan Rapi):</label>
+        <div id="cleanOutput" class="output-box">Belum ada data. Silakan proses di Tab 2.</div>
+        <p class="note">Data ini digunakan sebagai acuan urutan untuk Tab 5.</p>
+    </div>
+
+    <div id="tab4" class="tab-content">
+        <label for="pathInput">Masukkan Path File (Acak tidak masalah):</label>
+        <textarea id="pathInput" placeholder="Contoh:&#10;Loop 3d 5_8.mov, Loop 3d 5 2.mov, Loop 3d 12.mov"></textarea>
+        <button onclick="matchPaths()">Sesuaikan Path dengan Urutan Tab 3</button>
+    </div>
+
+    <div id="tab5" class="tab-content">
+        <label>Path Final (Berurutan sesuai Tab 3):</label>
+        <textarea id="finalOutput" readonly placeholder="Hasil akan muncul di sini..."></textarea>
+        <button onclick="copyToClipboard()">Copy Hasil</button>
+    </div>
+</div>
+
+<script>
+    // --- Global Variable untuk menyimpan urutan nama dari Tab 2 ---
+    let orderedNames = [];
+
+    // --- Fungsi Tab Navigation ---
+    function openTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tab-btn");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+    }
+
+    // --- TAB 1: Logic API Key ---
+    window.onload = function() {
+        // Cek apakah ada API key tersimpan saat halaman dimuat
+        const savedKey = localStorage.getItem('userApiKey');
+        if (savedKey) {
+            document.getElementById('apiKeyInput').value = savedKey;
+            document.getElementById('apiStatus').innerText = "Status: API Key tersimpan di browser.";
+            document.getElementById('apiStatus').style.color = "green";
+        }
+    }
+
+    function saveApiKey() {
+        const key = document.getElementById('apiKeyInput').value;
+        if (key) {
+            localStorage.setItem('userApiKey', key);
+            document.getElementById('apiStatus').innerText = "Status: API Key berhasil disimpan!";
+            document.getElementById('apiStatus').style.color = "green";
+            alert("API Key tersimpan. Tidak akan hilang walau di-refresh.");
+        } else {
+            alert("Kolom API Key kosong.");
+        }
+    }
+
+    // --- TAB 2 & 3: Logic Membersihkan Nama ---
+    function processNames() {
+        const rawText = document.getElementById('rawInput').value;
+        const lines = rawText.split('\n');
+        
+        orderedNames = []; // Reset array
+
+        lines.forEach(line => {
+            let cleanLine = line.trim();
+            // Filter: Abaikan baris kosong dan baris yang mengandung kata "Updated"
+            if (cleanLine !== "" && !cleanLine.startsWith("Updated") && !cleanLine.includes("Updated")) {
+                orderedNames.push(cleanLine);
+            }
+        });
+
+        // Tampilkan hasil di Tab 3
+        const outputDiv = document.getElementById('cleanOutput');
+        if (orderedNames.length > 0) {
+            outputDiv.innerText = orderedNames.join('\n');
+            // Pindah otomatis ke Tab 3 untuk melihat hasil (opsional)
+            document.querySelector('.tab-btn:nth-child(3)').click();
+        } else {
+            outputDiv.innerText = "Tidak ada nama valid yang ditemukan.";
+        }
+    }
+
+    // --- TAB 4 & 5: Logic Mencocokkan Path ---
+    function matchPaths() {
+        const pathText = document.getElementById('pathInput').value;
+        // Memisahkan path berdasarkan koma (,) atau baris baru (\n) agar fleksibel
+        let paths = pathText.split(/[\n,]+/).map(p => p.trim()).filter(p => p !== "");
+
+        let finalPaths = [];
+        let notFound = [];
+
+        // Algoritma Pencocokan
+        if (orderedNames.length === 0) {
+            alert("Silakan proses data di Tab 2 terlebih dahulu!");
+            return;
+        }
+
+        // Loop sesuai urutan nama di Tab 3 (orderedNames)
+        orderedNames.forEach(name => {
+            // Normalisasi Nama: Hapus spasi dan simbol, jadikan lowercase untuk pencocokan
+            // Contoh: "Loop 3d 5 8" -> "loop3d58"
+            let normalizedName = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+            // Cari path yang cocok di daftar paths
+            let foundPath = paths.find(path => {
+                // Normalisasi Path: Hapus spasi, underscore, simbol, lowercase
+                // Contoh: "Loop 3d 5_8.mov" -> "loop3d58mov"
+                let normalizedPath = path.toLowerCase().replace(/[^a-z0-9]/g, "");
+                
+                // Cek apakah path mengandung nama tersebut
+                return normalizedPath.includes(normalizedName);
+            });
+
+            if (foundPath) {
+                finalPaths.push(foundPath);
+            } else {
+                // Jika tidak ketemu, bisa diberi tanda atau dikosongkan (opsional)
+                // finalPaths.push(`[PATH NOT FOUND FOR: ${name}]`); 
+            }
+        });
+
+        // Tampilkan hasil di Tab 5
+        const finalTextArea = document.getElementById('finalOutput');
+        // Gabungkan dengan koma atau baris baru? User minta format seperti "path, path, path"
+        // Tapi biasanya copy list enaknya per baris, saya buat per baris agar rapi, 
+        // tapi jika ingin koma, ganti '\n' dengan ', '.
+        finalTextArea.value = finalPaths.join(',\n'); 
+        
+        // Pindah ke Tab 5
+        document.querySelector('.tab-btn:nth-child(5)').click();
+    }
+
+    function copyToClipboard() {
+        const copyText = document.getElementById("finalOutput");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); /* Untuk mobile */
+        navigator.clipboard.writeText(copyText.value).then(() => {
+            alert("Hasil berhasil disalin!");
+        });
+    }
+</script>
+
+</body>
+</html>
