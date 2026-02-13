@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>filename convert</title>
+    <title>Video Matcher (Strict Mode)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 20px; color: #333; }
         .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -43,22 +43,23 @@
 
         /* Badge Counter Style */
         .count-badge {
-            background-color: #28a745;
+            background-color: #6c757d;
             color: white;
-            padding: 2px 8px;
+            padding: 3px 10px;
             border-radius: 12px;
-            font-size: 0.85em;
+            font-size: 0.9em;
             margin-left: 8px;
             display: inline-block;
             vertical-align: middle;
         }
+        .count-badge.success { background-color: #28a745; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2>Video Matcher <span style="font-size:0.5em; color:#fff; background:#28a745; padding:3px 8px; border-radius:4px; vertical-align:middle;">Nama File Only</span></h2>
+        <h2>Video Matcher <span style="font-size:0.5em; color:#fff; background:#28a745; padding:3px 8px; border-radius:4px; vertical-align:middle;">Strict Mode</span></h2>
         <button class="reset" onclick="resetAll()">Reset Semua</button>
     </div>
 
@@ -76,14 +77,17 @@
     </div>
 
     <div id="tab2" class="tab-content">
-        <label>Hasil Nama Bersih (Cek Urutan di sini):</label>
+        <label>
+            Hasil Nama Bersih 
+            <span id="nameCountBadge" class="count-badge">0 Item</span>
+        </label>
         <textarea id="cleanOutput" readonly style="background:#f9f9f9; height: 200px;"></textarea>
         
         <button class="success" onclick="confirmOrder()">✅ Urutan Sudah Sesuai -> Masuk ke Input Path</button>
     </div>
 
     <div id="tab3" class="tab-content">
-        <label>Paste Path File Lengkap (Path "G:\" akan otomatis dibuang di output):</label>
+        <label>Paste Path File Lengkap (Folder & Tanda Kutip akan dibuang):</label>
         <textarea id="pathInput" placeholder='"G:\jey\envanto\Loop 3d 5_2.mov"&#10;"G:\jey\envanto\Loop 3d 12.mov"'></textarea>
         <button onclick="matchPaths()">Sesuaikan & Ambil Nama File</button>
     </div>
@@ -104,7 +108,7 @@
             </table>
         </div>
 
-        <label>Output Final (HANYA NAMA FILE - Siap Copy) <span id="finalCountBadge" class="count-badge" style="display:none;">0 File</span>:</label>
+        <label>Output Final (HANYA NAMA FILE - Siap Copy) <span id="finalCountBadge" class="count-badge success" style="display:none;">0 File</span>:</label>
         
         <textarea id="finalOutput" readonly style="height: 120px; font-weight: bold; color: #000;"></textarea>
         <button class="success" onclick="copyToClipboard()">Copy Hasil</button>
@@ -141,6 +145,9 @@
 
         document.getElementById('cleanOutput').value = orderedNames.join('\n');
         
+        // Update Badge Counter di Tab 2
+        document.getElementById('nameCountBadge').innerText = orderedNames.length + " Item";
+        
         // Pindah ke Tab 2
         document.querySelector('.tab-btn:nth-child(2)').click();
         openTab(null, 'tab2');
@@ -157,24 +164,26 @@
         openTab(null, 'tab3');
     }
 
-    // --- 3. MATCHING & CLEANING PATH ---
+    // --- 3. MATCHING & CLEANING PATH (Strict Mode) ---
     function matchPaths() {
         const pathText = document.getElementById('pathInput').value;
-        // Split baris
         let paths = pathText.split(/\r?\n/).map(p => p.trim()).filter(p => p !== "");
         
-        // Buat database file sementara
         fileDatabase = [];
         paths.forEach(fullPath => {
-            // Bersihkan tanda kutip
-            let cleanPath = fullPath.replace(/['"]+/g, '');
-            // Ambil hanya nama file (buang G:\Folder\...)
-            let fileName = cleanPath.split(/[\\/]/).pop();
+            let cleanPath = fullPath.replace(/['"]+/g, ''); // Hapus kutip
+            let fileName = cleanPath.split(/[\\/]/).pop(); // Ambil nama file + extension
             
             if (fileName) {
+                // Pre-process untuk strict matching:
+                // Hapus ekstensi, hapus simbol, lowercase
+                let nameNoExt = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+                let strictKey = nameNoExt.toLowerCase().replace(/[^a-z0-9]/g, "");
+
                 fileDatabase.push({
-                    original: cleanPath, // Masih disimpan jika butuh debug
-                    nameOnly: fileName   // Ini yang akan kita pakai
+                    original: cleanPath,
+                    nameOnly: fileName,
+                    strictKey: strictKey // Kunci rahasia untuk pencocokan akurat
                 });
             }
         });
@@ -188,14 +197,13 @@
         let finalOutputList = [];
 
         orderedNames.forEach((targetName, index) => {
-            // Normalisasi Target: "Loop 3d 5 2" -> "loop3d52"
+            // Target juga diproses sama: "Asset 2" -> "asset2"
             let normalizedTarget = targetName.toLowerCase().replace(/[^a-z0-9]/g, "");
 
-            // Cari di database file
+            // PENCARIAN STRICT: Harus SAMA PERSIS (===), bukan includes()
+            // Ini mencegah "Asset" mengambil "Asset 1"
             let match = fileDatabase.find(file => {
-                // Normalisasi File: "Loop 3d 5_2.mov" -> "loop3d52mov"
-                let normalizedFile = file.nameOnly.toLowerCase().replace(/[^a-z0-9]/g, "");
-                return normalizedFile.includes(normalizedTarget);
+                return file.strictKey === normalizedTarget;
             });
 
             let row = document.createElement("tr");
@@ -203,9 +211,7 @@
             let fileHTML = "";
 
             if (match) {
-                // KUNCI: Kita ambil match.nameOnly (Nama Filenya saja), BUKAN full path
                 finalOutputList.push(match.nameOnly);
-                
                 statusHTML = `<td class="match-ok">OK</td>`;
                 fileHTML = `<td>${match.nameOnly}</td>`;
             } else {
@@ -218,10 +224,9 @@
             tableBody.appendChild(row);
         });
 
-        // Tampilkan Hasil (Nama File Saja)
         document.getElementById('finalOutput').value = finalOutputList.join('\n');
 
-        // --- UPDATE PENGHITUNG JUMLAH FILE ---
+        // Update Badge Hasil
         const badge = document.getElementById('finalCountBadge');
         badge.style.display = 'inline-block';
         badge.innerText = finalOutputList.length + ' File';
@@ -243,7 +248,8 @@
             document.getElementById('cleanOutput').value = "";
             document.getElementById('pathInput').value = "";
             document.getElementById('finalOutput').value = "";
-            document.getElementById('finalCountBadge').style.display = "none"; // Reset badge
+            document.getElementById('finalCountBadge').style.display = "none";
+            document.getElementById('nameCountBadge').innerText = "0 Item";
             document.querySelector("#visualCheckTable tbody").innerHTML = "";
             orderedNames = [];
             document.querySelector('.tab-btn:nth-child(1)').click();
